@@ -1,73 +1,72 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   utils.c                                            :+:      :+:    :+:   */
+/*   maps.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: albrusso <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/05/12 03:21:34 by albrusso          #+#    #+#             */
-/*   Updated: 2023/05/16 01:07:03 by albrusso         ###   ########.fr       */
+/*   Created: 2023/05/17 14:38:46 by albrusso          #+#    #+#             */
+/*   Updated: 2023/05/17 15:18:08 by albrusso         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "so_long.h"
+#include "../so_long.h"
 
-int	ft_width(char *path)
+void	ft_read_utils(t_game *root, char *buffer, int fd, int y)
 {
-	int	width;
-	int	fd;
-	char	*buff;
+	static int	x;
 
-	fd = open(path, O_RDONLY);
-	if (fd < 0)
-		exit(0);
-	width = 0;
 	while (1)
 	{
-		buff = ft_calloc(2, 1);
-		read(fd, buff, 1);
-		if (buff[0] == '\n')
-			break ;
-		width++;
-		free(buff);
-	}
-	free(buff);
-	close(fd);
-	return (width);
-}
-
-int	ft_height(char *path)
-{
-	int	height;
-	int	fd;
-	char	*buff;
-
-	fd = open(path, O_RDONLY);
-	if (fd < 0)
-		exit(0);
-	height = 0;
-	while (1)
-	{
-		buff = ft_calloc(2, 1);
-		read(fd, buff, 1);
-		if (buff[0] == '\n')
-			height++;
-		if (buff[0] == '\0')
+		buffer = ft_calloc(2, 1);
+		read(fd, buffer, 1);
+		if (buffer[0] == '\0')
 		{
-			height++;
+			root->maps[y][x] = '\0';
 			break ;
 		}
-		free(buff);
+		if (buffer[0] == '\n')
+		{
+			root->maps[y][x] = '\0';
+			x = 0;
+			y++;
+		}
+		else
+		{
+			root->maps[y][x] = buffer[0];
+			x++;
+		}
+		free(buffer);
 	}
-	free(buff);
-	close(fd);
-	return(height);
+	free(buffer);
+}
+
+char	**ft_read_map(char *path, t_game *root)
+{
+	int		fd;
+	int		y;
+	char	*buffer;
+
+	y = 0;
+	buffer = NULL;
+	fd = open(path, O_RDONLY);
+	if (fd < 0)
+		ft_close(root);
+	ft_read_utils(root, buffer, fd, y);
+	return (root->maps);
+}
+
+void	ft_init_maps(t_game *root, char *path)
+{
+	root->width = ft_width(path);
+	root->height = ft_height(path);
+	root->maps = ft_alloc_maps(root);
 }
 
 char	**ft_alloc_maps(t_game *root)
 {
-	int	x;
-	int	y;
+	int		x;
+	int		y;
 	char	**map;
 
 	x = root->width;
@@ -79,19 +78,7 @@ char	**ft_alloc_maps(t_game *root)
 		map[y] = malloc(sizeof(char) * x + 1);
 		y--;
 	}
-	return(map);
-}
-
-void	ft_print_map(t_game *root)
-{
-	int	i;
-
-	i = 0;
-	while (i < root->height)
-	{
-		printf("1: %s", root->maps[i]);
-		i++;
-	}
+	return (map);
 }
 
 void	ft_free_maps(int height, char **maps)
@@ -106,5 +93,4 @@ void	ft_free_maps(int height, char **maps)
 	}
 	free(maps);
 	maps = NULL;
-	
 }
